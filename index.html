@@ -238,7 +238,6 @@
                     (pos) => {
                         document.getElementById('cidadeInput').value = "Sua Localização";
                         carregarDadosAPI(pos.coords.latitude, pos.coords.longitude, "Sua Localização");
-                        document.getElementById('cidadeInput').value = navigator.geolocation;
                     },
                     () => alert("Permissão de localização negada.")
                     

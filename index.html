@@ -242,6 +242,7 @@
 
         // 4. Geolocalização do Usuário
         function obterGeolocalizacao() {
+            var cidade = local.name || "Sua Localização";
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
@@ -253,7 +254,6 @@
             } else {
                 alert("Navegador não suporta geolocalização.");
             }
-            var cidade = local.name || "Sua Localização";
             document.getElementById('cidadeInput').value = cidade;
         }
 

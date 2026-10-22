@@ -126,7 +126,7 @@
                     } else if (i === 1) {
                         tagDia = 'Anteontem';
                     } else {
-                        tagDia = '3 dias atrás'; // Ou `Dia ${i + 1}`
+                        tagDia = '3 dias atrás';
                     }
                     const destaque = i === 3 ? 'border-sky-500/50 bg-sky-500/10' : 'border-slate-700/40 bg-slate-900/50';
 
@@ -231,7 +231,8 @@
 
                 if (data.results && data.results.length > 0) {
                     var local = data.results[0];
-                    carregarDadosAPI(local.latitude, local.longitude, local.name, local.country_code.toUpperCase());
+                    var nomeFormatado = `${local.name}${local.country_code ? ', ' + local.country_code.toUpperCase() : ''}`;
+                    carregarDadosAPI(local.latitude, local.longitude, nomeFormatado);
                 } else {
                     alert("Cidade não encontrada!");
                 }
@@ -240,21 +241,40 @@
             }
         }
 
-        // 4. Geolocalização do Usuário
+        // 4. Geolocalização do Usuário + Geocodificação Reversa
         function obterGeolocalizacao() {
-            var cidade = local.name || "Sua Localização";
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        carregarDadosAPI(pos.coords.latitude, pos.coords.longitude, local.name || "Sua Localização");
+                    async (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lon = pos.coords.longitude;
+
+                        let nomeCidade = "Sua Localização";
+
+                        // Busca reversa para pegar o nome da cidade via coordenadas GPS
+                        try {
+                            const reverseGeoUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`;
+                            const res = await fetch(reverseGeoUrl);
+                            const data = await res.json();
+
+                            if (data.city || data.locality) {
+                                const cidade = data.city || data.locality;
+                                const pais = data.countryCode ? `, ${data.countryCode.toUpperCase()}` : '';
+                                nomeCidade = `${cidade}${pais}`;
+                            }
+                        } catch (e) {
+                            console.warn("Não foi possível obter o nome da cidade por extenso.", e);
+                        }
+
+                        // Atualiza o input e executa a atualização dos dados
+                        document.getElementById('cidadeInput').value = nomeCidade;
+                        carregarDadosAPI(lat, lon, nomeCidade);
                     },
                     () => alert("Permissão de localização negada.")
-                    
                 );
             } else {
                 alert("Navegador não suporta geolocalização.");
             }
-            document.getElementById('cidadeInput').value = cidade;
         }
 
         // Inicializar com cidade padrão ao carregar

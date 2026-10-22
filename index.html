@@ -48,7 +48,7 @@
             <div class="md:col-span-5 bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl p-6 shadow-xl">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-base font-semibold text-white flex items-center gap-2">
-                        <span>📊</span> Histórico Recente (API)
+                        <span>📊</span> Histórico Recente
                     </h2>
                     <span id="cidadeAtual" class="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded-md">São Paulo, BR</span>
                 </div>
@@ -118,13 +118,13 @@
                 // Montar HTML do Histórico para os 4 dias
                 let htmlHistorico = '';
                 for (let i = 0; i < 4; i++) {
-                    const tagDia = i === 3 ? 'Hoje (Dia 4)' : `Dia ${i + 1}`;
+                    const tagDia = i === 3 ? 'Hoje' : `Dia ${i + 1}`;
                     const destaque = i === 3 ? 'border-sky-500/50 bg-sky-500/10' : 'border-slate-700/40 bg-slate-900/50';
 
                     htmlHistorico += `
                         <div class="p-3 rounded-xl border ${destaque} text-xs flex justify-between items-center">
                             <div>
-                                <span class="font-semibold block ${i === 3 ? 'text-sky-400' : 'text-slate-300'}">${tagDia} (${datas[i]})</span>
+                                <span class="font-semibold block ${i === 3 ? 'text-sky-400' : 'text-slate-300'}"></span>
                                 <span class="text-slate-400">🌡️ ${temps[i].toFixed(1)}°C | 💧 ${umidades[i].toFixed(0)}%</span>
                             </div>
                             <span class="font-mono text-slate-300">🌧️ ${chuvas[i].toFixed(1)} mm</span>

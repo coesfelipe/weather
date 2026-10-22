@@ -118,7 +118,16 @@
                 // Montar HTML do Histórico para os 4 dias
                 let htmlHistorico = '';
                 for (let i = 0; i < 4; i++) {
-                    const tagDia = i === 3 ? 'Hoje' : `Dia ${i + 1}`;
+                    let tagDia;
+                    if (i === 3) {
+                        tagDia = 'Hoje';
+                    } else if (i === 2) {
+                        tagDia = 'Ontem';
+                    } else if (i === 1) {
+                        tagDia = 'Anteontem';
+                    } else {
+                        tagDia = '3 dias atrás'; // Ou `Dia ${i + 1}`
+                    }
                     const destaque = i === 3 ? 'border-sky-500/50 bg-sky-500/10' : 'border-slate-700/40 bg-slate-900/50';
 
                     htmlHistorico += `

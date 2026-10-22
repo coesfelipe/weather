@@ -246,8 +246,6 @@
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
                         carregarDadosAPI(pos.coords.latitude, pos.coords.longitude, local.name || "Sua Localização");
-                        var cidade = local.name || "Sua Localização";
-                        document.getElementById('cidadeInput').value = cidade;
                     },
                     () => alert("Permissão de localização negada.")
                     
@@ -255,6 +253,8 @@
             } else {
                 alert("Navegador não suporta geolocalização.");
             }
+            var cidade = local.name || "Sua Localização";
+            document.getElementById('cidadeInput').value = cidade;
         }
 
         // Inicializar com cidade padrão ao carregar

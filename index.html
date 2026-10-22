@@ -3,108 +3,401 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Previsão do Tempo — Open-Meteo</title>
-    <!-- Tailwind CSS para visual moderno -->
+    <title>Previsão do Tempo & Classificador Matricial — Open-Meteo</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        weather: {
+                            dark: '#0B0F19',
+                            card: '#151C2C',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            glass: 'rgba(21, 28, 44, 0.75)',
+                            accent: '#38BDF8'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body {
+            background-color: #0B0F19;
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.5) 0px, transparent 100%);
+            background-attachment: fixed;
+        }
+
+        .glass-panel {
+            background: rgba(21, 28, 44, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(56, 189, 248, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(56, 189, 248, 0.1);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.2);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(56, 189, 248, 0.4);
+        }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 flex flex-col justify-between">
+<body class="text-slate-100 min-h-screen font-sans flex flex-col justify-between antialiased selection:bg-sky-500 selection:text-slate-950">
 
-    <div class="max-w-4xl mx-auto w-full">
-        <!-- Cabeçalho -->
-        <header class="text-center mb-8">
-            <div class="inline-flex items-center gap-2 px-3 py-1 bg-sky-500/10 text-sky-400 rounded-full text-sm font-medium border border-sky-500/20 mb-3">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                Previsão diária · Open-Meteo
+    <!-- Container Principal -->
+    <div class="max-w-6xl mx-auto w-full p-4 sm:p-6 md:p-8 space-y-6">
+
+        <!-- Header -->
+        <header class="text-center pt-4 pb-2">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-500/10 text-sky-400 text-xs font-semibold tracking-wide border border-sky-500/20 mb-4 shadow-sm">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+                </span>
+                SISTEMA METEOROLÓGICO & MODELO MATRICIAL
             </div>
-            <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">Previsão do tempo</h1>
-            <p class="text-slate-400 mt-2 max-w-xl mx-auto text-sm md:text-base">
-                Consulte os dados de ontem e de hoje, além da previsão para os próximos cinco dias, diretamente da Open-Meteo.
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
+                Previsão do Tempo <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-400">&</span> Álgebra Linear
+            </h1>
+            <p class="text-slate-400 mt-2 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
+                Dados em tempo real via Open-Meteo e demonstração interativa de classificação climática usando multiplicação de matrizes (<span class="font-mono text-sky-300">S = X · W</span>).
             </p>
         </header>
 
-        <!-- Barra de Busca de Localização -->
-        <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-4 mb-8 shadow-xl flex flex-col sm:flex-row items-center gap-4 justify-between">
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-                <span class="text-xl">📍</span>
-                <input type="text" id="cidadeInput" placeholder="Digite uma cidade..." value="São Paulo" class="bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl px-4 py-2 text-sm text-slate-100 w-full sm:w-64">
-                <button onclick="buscarCidade()" class="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold rounded-xl text-sm transition">
-                    Buscar
-                </button>
-            </div>
-            <button onclick="obterGeolocalizacao()" class="text-xs text-sky-400 hover:text-sky-300 transition-colors flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                Usar minha localização atual
-            </button>
-        </div>
-
-        <!-- Conteúdo Principal -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+        <!-- Barra de Busca -->
+        <section class="glass-panel rounded-2xl p-4 sm:p-5 shadow-2xl relative z-10">
+            <form onsubmit="event.preventDefault(); buscarCidade();" class="flex flex-col md:flex-row items-center gap-3">
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input type="text" id="cidadeInput" placeholder="Digite uma cidade (ex: São Paulo, Rio de Janeiro, Lisboa)..." value="São Paulo" 
+                        class="w-full pl-10 pr-4 py-3 bg-slate-900/80 border border-slate-700/80 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 rounded-xl text-sm text-slate-100 placeholder-slate-500 outline-none transition-all shadow-inner">
+                </div>
+                <div class="flex items-center gap-2 w-full md:w-auto shrink-0">
+                    <button type="submit" id="btnBuscar" class="flex-1 md:flex-none px-6 py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-lg shadow-sky-500/20 active:scale-95 flex items-center justify-center gap-2">
+                        <span>Buscar</span>
+                    </button>
+                    <button type="button" onclick="obterGeolocalizacao()" title="Usar minha localização atual" 
+                        class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700/80 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span class="hidden sm:inline">Minha Posição</span>
+                    </button>
+                </div>
+            </form>
             
-            <!-- Histórico de ontem e hoje -->
-            <div class="md:col-span-5 bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl p-6 shadow-xl">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-base font-semibold text-white flex items-center gap-2">
-                        <span>📊</span> Ontem e hoje
-                    </h2>
-                    <span id="cidadeAtual" class="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded-md">São Paulo, BR</span>
-                </div>
-
-                <div id="listaHistorico" class="space-y-3">
-                    <div class="text-center py-6 text-slate-500 text-xs">Carregando dados da API...</div>
-                </div>
+            <!-- Sugestões Rápidas -->
+            <div class="flex items-center gap-2 mt-3 overflow-x-auto pb-1 text-xs text-slate-400">
+                <span class="shrink-0 text-slate-500">Exemplos rápidos:</span>
+                <button onclick="definirECarregarCidade('São Paulo')" class="hover:text-sky-300 bg-slate-800/60 hover:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700/50 transition">São Paulo</button>
+                <button onclick="definirECarregarCidade('Rio de Janeiro')" class="hover:text-sky-300 bg-slate-800/60 hover:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700/50 transition">Rio de Janeiro</button>
+                <button onclick="definirECarregarCidade('Brasília')" class="hover:text-sky-300 bg-slate-800/60 hover:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700/50 transition">Brasília</button>
+                <button onclick="definirECarregarCidade('Lisboa')" class="hover:text-sky-300 bg-slate-800/60 hover:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700/50 transition">Lisboa</button>
+                <button onclick="definirECarregarCidade('Nova York')" class="hover:text-sky-300 bg-slate-800/60 hover:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700/50 transition">Nova York</button>
+                <button onclick="definirECarregarCidade('Tóquio')" class="hover:text-sky-300 bg-slate-800/60 hover:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700/50 transition">Tóquio</button>
             </div>
+        </section>
 
-            <!-- Previsão real da API para os próximos cinco dias -->
-            <div class="md:col-span-7 bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl p-6 shadow-xl">
-                <h2 class="text-base font-semibold text-white flex items-center gap-2 mb-4">
-                    <span>🔮</span> Próximos cinco dias
-                </h2>
-                <div id="listaPrevisao" class="space-y-3">
-                    <div class="text-center py-6 text-slate-500 text-xs">Carregando previsão da API...</div>
-                </div>
+        <!-- Banner de Localização Atual -->
+        <div class="flex flex-wrap items-center justify-between gap-3 px-2">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">📍</span>
+                <h2 id="cidadeAtual" class="text-xl font-bold text-white tracking-wide">São Paulo, BR</h2>
+                <span id="coordenadasAtual" class="text-xs font-mono text-slate-500 hidden sm:inline-block">(-23.55, -46.63)</span>
             </div>
-
-            <div class="md:col-span-12 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5">
-                <h2 class="text-sm font-semibold text-sky-300 mb-2">Como é feito o cálculo da previsão com matrizes</h2>
-                <p class="text-xs text-slate-300 leading-relaxed">
-                    A página consulta a API Open-Meteo para a localização escolhida e exibe ontem, hoje e a previsão dos próximos cinco dias,
-                    com temperaturas máxima e mínima, umidade média, precipitação e condição do tempo. A condição é obtida do código meteorológico
-                    diário retornado pela API; esta página não calcula a previsão nem usa matrizes para classificar os dias.
-                    <span class="block mt-2">Como proposta para o trabalho, cada linha da matriz <span class="font-mono text-slate-100">X</span> pode representar um dia
-                    com máxima e mínima normalizadas, umidade dividida por 100 e precipitação limitada a 10 mm.
-                    Calcule <span class="font-mono text-slate-100">S = X · W</span>, em que as colunas de <span class="font-mono text-slate-100">W</span>
-                    representam as classes ensolarado, nublado e chuvoso; a maior pontuação indicaria a classe estimada.
-                    Essa classificação matricial ainda precisaria ser implementada e validada com os códigos da Open-Meteo.</span>
-                </p>
+            <div id="dataAtualizacao" class="text-xs text-slate-400 font-mono bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/40">
+                Carregando horário...
             </div>
-
         </div>
+
+        <!-- Grade Principal de Previsão -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Lado Esquerdo: Ontem e Hoje (5 colunas) -->
+            <div class="lg:col-span-5 space-y-4">
+                <div class="glass-panel rounded-2xl p-5 shadow-xl">
+                    <div class="flex items-center justify-between mb-4 border-b border-slate-700/50 pb-3">
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <span class="p-1.5 bg-sky-500/10 text-sky-400 rounded-lg text-sm">📊</span>
+                            Histórico Recente
+                        </h2>
+                        <span class="text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700">Ontem & Hoje</span>
+                    </div>
+
+                    <div id="listaHistorico" class="space-y-3">
+                        <!-- Skeleton Loading -->
+                        <div class="animate-pulse space-y-3">
+                            <div class="h-24 bg-slate-800/60 rounded-xl"></div>
+                            <div class="h-24 bg-slate-800/60 rounded-xl"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumo Climático Rápido -->
+                <div id="cardDestaqueHoje" class="glass-panel rounded-2xl p-5 shadow-xl border-l-4 border-l-sky-500 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-sky-400 uppercase tracking-wider">Sensação Térmica Máxima</span>
+                        <div id="destaqueMaxTemp" class="text-2xl font-black text-white mt-0.5">-- °C</div>
+                        <p id="destaqueFrase" class="text-xs text-slate-400 mt-1">Carregando métricas...</p>
+                    </div>
+                    <div id="destaqueIcone" class="text-4xl animate-float">☀️</div>
+                </div>
+            </div>
+
+            <!-- Lado Direito: Próximos 5 Dias (7 colunas) -->
+            <div class="lg:col-span-7">
+                <div class="glass-panel rounded-2xl p-5 shadow-xl">
+                    <div class="flex items-center justify-between mb-4 border-b border-slate-700/50 pb-3">
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <span class="p-1.5 bg-indigo-500/10 text-indigo-400 rounded-lg text-sm">🔮</span>
+                            Previsão para 5 Dias
+                        </h2>
+                        <span class="text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700">Dias seguintes</span>
+                    </div>
+
+                    <div id="listaPrevisao" class="space-y-3">
+                        <!-- Skeleton Loading -->
+                        <div class="animate-pulse space-y-3">
+                            <div class="h-20 bg-slate-800/60 rounded-xl"></div>
+                            <div class="h-20 bg-slate-800/60 rounded-xl"></div>
+                            <div class="h-20 bg-slate-800/60 rounded-xl"></div>
+                            <div class="h-20 bg-slate-800/60 rounded-xl"></div>
+                            <div class="h-20 bg-slate-800/60 rounded-xl"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção Interativa de Álgebra Linear & Matrizes -->
+        <section class="glass-panel rounded-2xl p-6 shadow-2xl border-t-2 border-t-sky-500/50 space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-700/60 pb-4">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-400 uppercase tracking-wider mb-1">
+                        <span>🧮 Projeto de Matemática Aplicada</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-white">Classificação Climática com Álgebra Matricial</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="diaSelecMatriz" class="text-xs text-slate-300 font-medium">Analisar dia:</label>
+                    <select id="diaSelecMatriz" onchange="atualizarDemonstracaoMatricial()" class="bg-slate-900 border border-slate-700 text-sky-300 text-xs rounded-lg px-3 py-2 outline-none focus:border-sky-500 font-mono">
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Explicação Teórica Resumida -->
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Neste modelo estatístico matricial, as variáveis meteorológicas de um dia são vetorizadas e normalizadas na matriz de recursos <span class="font-mono text-sky-300 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700">X</span>. Ao multiplicar <span class="font-mono text-sky-300 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700">X</span> pela matriz de pesos <span class="font-mono text-indigo-300 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700">W</span>, obtemos a matriz de pontuações <span class="font-mono text-emerald-300 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700">S = X · W</span>. A maior pontuação indica a classe estimada pelo algoritmo.
+            </p>
+
+            <!-- Calculadora Interativa Matricial -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center bg-slate-900/80 rounded-xl p-4 border border-slate-800">
+                
+                <!-- Matriz X (Entrada) -->
+                <div class="lg:col-span-4 bg-slate-950/70 p-3.5 rounded-lg border border-slate-800">
+                    <div class="text-xs font-mono text-sky-400 font-semibold mb-2 flex justify-between">
+                        <span>Vetor de Recursos (X)</span>
+                        <span class="text-slate-500">[1 x 4]</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                        <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                            <span class="text-slate-500 block text-[10px]">Max Temp Norm</span>
+                            <span id="mX_tempMax" class="text-sky-200 font-bold">0.00</span>
+                        </div>
+                        <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                            <span class="text-slate-500 block text-[10px]">Min Temp Norm</span>
+                            <span id="mX_tempMin" class="text-sky-200 font-bold">0.00</span>
+                        </div>
+                        <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                            <span class="text-slate-500 block text-[10px]">Umidade (0-1)</span>
+                            <span id="mX_umidade" class="text-sky-200 font-bold">0.00</span>
+                        </div>
+                        <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                            <span class="text-slate-500 block text-[10px]">Chuva Norm</span>
+                            <span id="mX_chuva" class="text-sky-200 font-bold">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Operador de Multiplicação -->
+                <div class="lg:col-span-1 text-center font-bold text-slate-500 text-xl hidden lg:block">
+                    ×
+                </div>
+
+                <!-- Matriz W (Pesos) -->
+                <div class="lg:col-span-4 bg-slate-950/70 p-3.5 rounded-lg border border-slate-800">
+                    <div class="text-xs font-mono text-indigo-400 font-semibold mb-2 flex justify-between">
+                        <span>Matriz de Pesos (W)</span>
+                        <span class="text-slate-500">[4 x 3]</span>
+                    </div>
+                    <div class="text-[11px] font-mono grid grid-cols-3 gap-1 text-center text-slate-300">
+                        <div class="text-amber-400 font-bold text-[10px]">Ensolarado</div>
+                        <div class="text-slate-400 font-bold text-[10px]">Nublado</div>
+                        <div class="text-blue-400 font-bold text-[10px]">Chuvoso</div>
+
+                        <div class="bg-slate-900 py-1 rounded border border-slate-800/80">+0.60</div>
+                        <div class="bg-slate-900 py-1 rounded border border-slate-800/80">-0.20</div>
+                        <div class="bg-slate-900 py-1 rounded border border-slate-800/80">-0.50</div>
+
+                        <div class="bg-slate-900 py-1 rounded border border-slate-800/80">+0.30</div>
+                        <div class="bg-slate-900 py-1 rounded border border-slate-800/80">+0.10</div>
+                        <div class="bg-slate-900 py-1 rounded border border-slate-800/80">-0.30</div>
+
+                        <div class="bg-slate-900 py-1 rounded border border-slate-800/80">-0.40</div>
+                        <div class="bg-slate-900 py-1 rounded border border-slate-800/80">+0.50</div>
+                        <div class="bg-slate-900 py-1 rounded border border-slate-800/80">+0.40</div>
+
+                        <div class="bg-slate-900 py-1 rounded border border-slate-800/80">-0.80</div>
+                        <div class="bg-slate-900 py-1 rounded border border-slate-800/80">+0.20</div>
+                        <div class="bg-slate-900 py-1 rounded border border-slate-800/80">+0.90</div>
+                    </div>
+                </div>
+
+                <!-- Operador Igual -->
+                <div class="lg:col-span-1 text-center font-bold text-slate-500 text-xl hidden lg:block">
+                    =
+                </div>
+
+                <!-- Matriz S (Resultado/Scores) -->
+                <div class="lg:col-span-2 bg-slate-950/70 p-3.5 rounded-lg border border-slate-800">
+                    <div class="text-xs font-mono text-emerald-400 font-semibold mb-2">
+                        Pontuação (S)
+                    </div>
+                    <div class="space-y-1.5 text-xs font-mono">
+                        <div id="scoreSun" class="flex justify-between items-center bg-slate-900 p-1.5 rounded px-2 border border-slate-800">
+                            <span class="text-amber-300">☀️ Sol:</span>
+                            <span class="val font-bold">0.00</span>
+                        </div>
+                        <div id="scoreCloud" class="flex justify-between items-center bg-slate-900 p-1.5 rounded px-2 border border-slate-800">
+                            <span class="text-slate-300">☁️ Nub:</span>
+                            <span class="val font-bold">0.00</span>
+                        </div>
+                        <div id="scoreRain" class="flex justify-between items-center bg-slate-900 p-1.5 rounded px-2 border border-slate-800">
+                            <span class="text-blue-300">🌧️ Chu:</span>
+                            <span class="val font-bold">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Resultado do Modelo e Comparação -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 block mb-1">Resultado da Classificação Matricial:</span>
+                        <div id="matrizResultadoEstimado" class="text-base font-bold text-sky-300 flex items-center gap-2">
+                            <span>Calculando...</span>
+                        </div>
+                    </div>
+                    <div class="text-xs font-mono bg-sky-500/10 text-sky-400 px-2.5 py-1 rounded-md border border-sky-500/20">
+                        Modelo Linear
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 block mb-1">Código Oficial Open-Meteo:</span>
+                        <div id="matrizResultadoOficial" class="text-base font-bold text-indigo-300 flex items-center gap-2">
+                            <span>Carregando...</span>
+                        </div>
+                    </div>
+                    <div class="text-xs font-mono bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-md border border-indigo-500/20">
+                        Sensor WMO
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-xs text-slate-500 pt-4 pb-6 space-y-1">
+            <p>Dados meteorológicos fornecidos gratuitamente por <a href="https://open-meteo.com/" target="_blank" class="text-sky-400 hover:underline">Open-Meteo API</a>.</p>
+            <p>Desenvolvido para demonstração de Previsão do Tempo e Aplicação Prática de Matrizes.</p>
+        </footer>
+
     </div>
 
-    <!-- Script JavaScript -->
+    <!-- Script JavaScript Principal -->
     <script>
-        // Carrega ontem, hoje e os próximos cinco dias da API Open-Meteo.
+        // Armazenamento global de dados carregados
+        let globalDadosDiarios = [];
+
+        // Matriz de Pesos W estática [4 x 3]
+        // Linhas: [TempMaxNorm, TempMinNorm, UmidadeNorm, ChuvaNorm]
+        // Colunas: [Ensolarado, Nublado, Chuvoso]
+        const MATRIZ_W = [
+            [ 0.60, -0.20, -0.50], // TempMax
+            [ 0.30,  0.10, -0.30], // TempMin
+            [-0.40,  0.50,  0.40], // Umidade
+            [-0.80,  0.20,  0.90]  // Chuva
+        ];
+
+        // 1. Carrega os dados da API Open-Meteo
         async function carregarDadosAPI(lat = -23.5505, lon = -46.6333, nomeCidade = "São Paulo, BR") {
+            atualizarInterfaceLoading();
+            
             document.getElementById('cidadeAtual').innerText = nomeCidade;
-            document.getElementById('listaHistorico').innerHTML =
-                '<div class="text-center py-6 text-slate-500 text-xs">Carregando dados da API...</div>';
-            document.getElementById('listaPrevisao').innerHTML =
-                '<div class="text-center py-6 text-slate-500 text-xs">Carregando previsão da API...</div>';
+            document.getElementById('coordenadasAtual').innerText = `(${lat.toFixed(2)}, ${lon.toFixed(2)})`;
 
             const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,precipitation_sum&timezone=auto&past_days=1&forecast_days=6`;
 
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
-                    throw new Error(`A API Open-Meteo respondeu com o status ${response.status}.`);
+                    throw new Error(`Status da resposta: ${response.status}`);
                 }
                 const data = await response.json();
+
                 if (!data.daily || !Array.isArray(data.daily.time) || data.daily.time.length < 7) {
-                    throw new Error("A API não retornou os sete dias solicitados.");
+                    throw new Error("A API não retornou o intervalo de dias solicitado.");
                 }
 
                 const datas = data.daily.time;
@@ -114,148 +407,335 @@
                 const umidades = data.daily.relative_humidity_2m_mean;
                 const chuvas = data.daily.precipitation_sum;
 
-                const dadosDiarios = datas.map((data, indice) => ({
-                    data,
-                    codigo: codigos[indice],
-                    tempMax: tempsMax[indice],
-                    tempMin: tempsMin[indice],
-                    umidade: umidades[indice],
-                    chuva: chuvas[indice]
+                // Mapear dados
+                globalDadosDiarios = datas.map((d, i) => ({
+                    data: d,
+                    codigo: codigos[i],
+                    tempMax: tempsMax[i],
+                    tempMin: tempsMin[i],
+                    umidade: umidades[i],
+                    chuva: chuvas[i]
                 }));
 
-                document.getElementById('listaHistorico').innerHTML =
-                    dadosDiarios.slice(0, 2).map((dia, indice) =>
-                        criarCartaoDia(dia, indice === 0 ? 'Ontem' : 'Hoje', indice === 1)
-                    ).join('');
-                document.getElementById('listaPrevisao').innerHTML =
-                    dadosDiarios.slice(2).map((dia, indice) =>
-                        criarCartaoDia(dia, formatarData(dia.data), false, indice + 1)
-                    ).join('');
+                // Renderizar Interface
+                renderizarHistorico(globalDadosDiarios.slice(0, 2));
+                renderizarPrevisao(globalDadosDiarios.slice(2));
+                atualizarDestaqueHoje(globalDadosDiarios[1]);
+                preencherSelectMatriz(globalDadosDiarios);
+                atualizarDemonstracaoMatricial();
+
+                // Atualizar carimbo de hora
+                const agora = new Date();
+                document.getElementById('dataAtualizacao').innerText = `Atualizado às ${agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
 
             } catch (error) {
-                console.error(error);
-                const mensagem = "Não foi possível carregar os dados do tempo. Tente novamente.";
-                document.getElementById('listaHistorico').innerHTML =
-                    `<div class="text-center py-6 text-rose-300 text-xs">${mensagem}</div>`;
-                document.getElementById('listaPrevisao').innerHTML =
-                    `<div class="text-center py-6 text-rose-300 text-xs">${mensagem}</div>`;
+                console.error("Erro ao carregar dados:", error);
+                const msgErro = `<div class="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl text-center text-xs">Erro ao carregar dados da API. Tente novamente mais tarde.</div>`;
+                document.getElementById('listaHistorico').innerHTML = msgErro;
+                document.getElementById('listaPrevisao').innerHTML = msgErro;
             }
         }
 
+        // Visual de Loading
+        function atualizarInterfaceLoading() {
+            const skeleton = `
+                <div class="animate-pulse space-y-3">
+                    <div class="h-20 bg-slate-800/50 rounded-xl"></div>
+                    <div class="h-20 bg-slate-800/50 rounded-xl"></div>
+                </div>`;
+            document.getElementById('listaHistorico').innerHTML = skeleton;
+            document.getElementById('listaPrevisao').innerHTML = skeleton;
+        }
+
+        // Classificação dos códigos de tempo WMO da Open-Meteo
         function classificarClima(codigo) {
-            if ([0].includes(codigo)) return { descricao: "Ensolarado", emoji: "☀️" };
-            if ([1, 2].includes(codigo)) return { descricao: "Parcialmente nublado", emoji: "🌤️" };
-            if ([3].includes(codigo)) return { descricao: "Nublado", emoji: "☁️" };
-            if ([45, 48].includes(codigo)) return { descricao: "Neblina", emoji: "🌫️" };
+            if ([0].includes(codigo)) return { descricao: "Ensolarado", emoji: "☀️", cor: "text-amber-400", bg: "from-amber-500/10 to-orange-500/5" };
+            if ([1, 2].includes(codigo)) return { descricao: "Parcialmente Nublado", emoji: "🌤️", cor: "text-sky-300", bg: "from-sky-500/10 to-slate-500/5" };
+            if ([3].includes(codigo)) return { descricao: "Encoberto / Nublado", emoji: "☁️", cor: "text-slate-300", bg: "from-slate-500/10 to-slate-700/5" };
+            if ([45, 48].includes(codigo)) return { descricao: "Neblina", emoji: "🌫️", cor: "text-teal-300", bg: "from-teal-500/10 to-slate-500/5" };
             if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(codigo)) {
-                return { descricao: "Chuva", emoji: "🌧️" };
+                return { descricao: "Chuva / Drizzle", emoji: "🌧️", cor: "text-blue-400", bg: "from-blue-500/15 to-indigo-500/5" };
             }
-            if ([71, 73, 75, 77, 85, 86].includes(codigo)) return { descricao: "Neve", emoji: "❄️" };
-            if ([95, 96, 99].includes(codigo)) return { descricao: "Trovoada", emoji: "⛈️" };
-            return { descricao: "Condição indisponível", emoji: "—" };
+            if ([71, 73, 75, 77, 85, 86].includes(codigo)) return { descricao: "Neve", emoji: "❄️", cor: "text-cyan-200", bg: "from-cyan-500/15 to-blue-500/5" };
+            if ([95, 96, 99].includes(codigo)) return { descricao: "Tempestade", emoji: "⛈️", cor: "text-purple-400", bg: "from-purple-500/15 to-indigo-500/5" };
+            return { descricao: "Desconhecido", emoji: "🌡️", cor: "text-slate-400", bg: "from-slate-500/10 to-slate-700/5" };
         }
 
-        function formatarData(data) {
-            const [ano, mes, dia] = data.split('-').map(Number);
-            return new Date(ano, mes - 1, dia).toLocaleDateString('pt-BR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'short'
-            });
+        function formatarDataExtenso(dataStr) {
+            const [ano, mes, dia] = dataStr.split('-').map(Number);
+            const date = new Date(ano, mes - 1, dia);
+            return date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
         }
 
-        function formatarValor(valor, casasDecimais) {
-            return Number.isFinite(valor) ? valor.toFixed(casasDecimais) : '—';
+        function formatarNum(v, casas = 1) {
+            return typeof v === 'number' && !isNaN(v) ? v.toFixed(casas) : '—';
         }
 
-        function criarCartaoDia(dia, rotulo, destaque, numeroPrevisao) {
-            const clima = classificarClima(dia.codigo);
-            const ehPrevisao = Boolean(numeroPrevisao);
-            const classes = ehPrevisao
-                ? 'border-2 border-sky-400/50 bg-gradient-to-r from-sky-500/15 to-indigo-500/10 shadow-lg shadow-sky-950/30'
-                : destaque
-                    ? 'border-sky-500/50 bg-sky-500/10'
-                    : 'border-slate-700/40 bg-slate-900/50';
-            const titulo = ehPrevisao
-                ? numeroPrevisao === 1 ? `Amanhã · ${rotulo}` : rotulo
-                : rotulo;
-            const detalhesClima = `${clima.descricao} · máx ${formatarValor(dia.tempMax, 1)}°C · mín ${formatarValor(dia.tempMin, 1)}°C`;
+        // Renderiza Cartões de Ontem e Hoje
+        function renderizarHistorico(dias) {
+            const container = document.getElementById('listaHistorico');
+            container.innerHTML = dias.map((dia, idx) => {
+                const rotulo = idx === 0 ? 'Ontem' : 'Hoje';
+                const clima = classificarClima(dia.codigo);
+                const ehHoje = idx === 1;
 
-            return `
-                <div class="${ehPrevisao ? 'p-4 md:p-5' : 'p-3'} rounded-xl border ${classes} ${ehPrevisao ? 'text-sm md:text-base' : 'text-xs'} flex justify-between items-center gap-3">
-                    <div class="flex items-center gap-3 min-w-0">
-                        ${ehPrevisao ? `<span class="text-4xl md:text-5xl shrink-0" aria-hidden="true">${clima.emoji}</span>` : ''}
-                        <div class="min-w-0">
-                            <span class="font-bold block ${ehPrevisao ? 'text-base md:text-lg text-sky-200' : destaque ? 'text-sky-400' : 'text-slate-300'} underline">${titulo}</span>
-                            <span class="${ehPrevisao ? 'text-sm md:text-base text-slate-200' : 'text-slate-400'}">${ehPrevisao ? '' : `${clima.emoji} `}${detalhesClima}</span>
+                return `
+                    <div class="glass-card p-3.5 rounded-xl flex items-center justify-between border ${ehHoje ? 'border-sky-500/40 bg-sky-500/5' : 'border-slate-800'}">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl shrink-0" role="img">${clima.emoji}</span>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-sm ${ehHoje ? 'text-sky-300' : 'text-slate-200'}">${rotulo}</span>
+                                    <span class="text-[10px] text-slate-400 font-mono">(${formatarDataExtenso(dia.data)})</span>
+                                </div>
+                                <span class="text-xs ${clima.cor} font-medium block mt-0.5">${clima.descricao}</span>
+                                <div class="text-[11px] text-slate-400 mt-1">
+                                    Máx <span class="text-slate-200 font-semibold">${formatarNum(dia.tempMax)}°C</span> · 
+                                    Mín <span class="text-slate-200 font-semibold">${formatarNum(dia.tempMin)}°C</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right text-xs font-mono space-y-1">
+                            <div class="text-slate-300 flex items-center justify-end gap-1">
+                                <span class="text-sky-400">💧</span> ${formatarNum(dia.umidade, 0)}%
+                            </div>
+                            <div class="text-slate-400 flex items-center justify-end gap-1">
+                                <span class="text-blue-400">🌧️</span> ${formatarNum(dia.chuva, 1)} mm
+                            </div>
                         </div>
                     </div>
-                    <div class="text-right shrink-0">
-                        <span class="font-mono ${ehPrevisao ? 'text-slate-100' : 'text-slate-300'} block">💧 ${formatarValor(dia.umidade, 0)}%</span>
-                        <span class="font-mono ${ehPrevisao ? 'text-slate-300' : 'text-slate-400'}">🌧️ ${formatarValor(dia.chuva, 1)} mm</span>
+                `;
+            }).join('');
+        }
+
+        // Renderiza Cartões da Previsão de 5 Dias
+        function renderizarPrevisao(dias) {
+            const container = document.getElementById('listaPrevisao');
+            container.innerHTML = dias.map((dia, idx) => {
+                const clima = classificarClima(dia.codigo);
+                const dataFormatada = formatarDataExtenso(dia.data);
+                const tituloDia = idx === 0 ? `Amanhã (${dataFormatada})` : dataFormatada;
+
+                return `
+                    <div class="glass-card p-4 rounded-xl flex items-center justify-between gap-3 border border-slate-800/80 bg-gradient-to-r ${clima.bg}">
+                        <div class="flex items-center gap-3.5 min-w-0">
+                            <span class="text-3xl sm:text-4xl shrink-0" role="img">${clima.emoji}</span>
+                            <div class="min-w-0">
+                                <span class="font-bold text-sm text-slate-100 block truncate">${tituloDia}</span>
+                                <span class="text-xs ${clima.cor} font-medium block mt-0.5">${clima.descricao}</span>
+                                
+                                <!-- Barra Visual de Temperatura Max/Min -->
+                                <div class="flex items-center gap-2 mt-2 text-[11px] font-mono text-slate-400">
+                                    <span>${formatarNum(dia.tempMin, 0)}°</span>
+                                    <div class="w-20 sm:w-28 h-1.5 bg-slate-800 rounded-full overflow-hidden flex">
+                                        <div class="h-full bg-gradient-to-r from-blue-400 via-sky-400 to-amber-400 rounded-full w-full"></div>
+                                    </div>
+                                    <span class="text-slate-200 font-semibold">${formatarNum(dia.tempMax, 0)}°</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-right text-xs font-mono space-y-1.5 shrink-0 border-l border-slate-700/40 pl-3">
+                            <div class="text-slate-200 font-semibold">
+                                <span class="text-sky-400 font-normal">💧</span> ${formatarNum(dia.umidade, 0)}%
+                            </div>
+                            <div class="text-slate-400">
+                                <span class="text-blue-400">🌧️</span> ${formatarNum(dia.chuva, 1)} mm
+                            </div>
+                        </div>
                     </div>
-                </div>
+                `;
+            }).join('');
+        }
+
+        // Card Destaque Rápido do Dia
+        function atualizarDestaqueHoje(hoje) {
+            if (!hoje) return;
+            const clima = classificarClima(hoje.codigo);
+            document.getElementById('destaqueMaxTemp').innerText = `${formatarNum(hoje.tempMax, 1)} °C`;
+            document.getElementById('destaqueIcone').innerText = clima.emoji;
+            document.getElementById('destaqueFrase').innerText = `${clima.descricao} com umidade relativa de ${formatarNum(hoje.umidade, 0)}%`;
+        }
+
+        // 2. Preenche o select da calculadora matricial
+        function preencherSelectMatriz(dias) {
+            const select = document.getElementById('diaSelecMatriz');
+            select.innerHTML = dias.map((d, i) => {
+                let rotulo = formatarDataExtenso(d.data);
+                if (i === 0) rotulo += " (Ontem)";
+                if (i === 1) rotulo += " (Hoje)";
+                if (i === 2) rotulo += " (Amanhã)";
+                return `<option value="${i}">${rotulo}</option>`;
+            }).join('');
+            select.value = 1; // Padrão: Hoje
+        }
+
+        // 3. Executa o Cálculo Matricial S = X · W
+        function atualizarDemonstracaoMatricial() {
+            if (!globalDadosDiarios || globalDadosDiarios.length === 0) return;
+
+            const idx = parseInt(document.getElementById('diaSelecMatriz').value) || 0;
+            const dia = globalDadosDiarios[idx];
+
+            // Normalização dos dados para criar o vetor X [1 x 4]
+            // Max Temp dividida por 40 (temperatura de referência)
+            const tempMaxNorm = Math.min(Math.max(dia.tempMax / 40.0, 0), 1.2);
+            // Min Temp dividida por 40
+            const tempMinNorm = Math.min(Math.max(dia.tempMin / 40.0, 0), 1.2);
+            // Umidade dividida por 100 (0 a 1)
+            const umidadeNorm = Math.min(Math.max(dia.umidade / 100.0, 0), 1.0);
+            // Precipitação limitada a 10mm (0 a 1)
+            const chuvaNorm = Math.min(Math.max(dia.chuva / 10.0, 0), 1.5);
+
+            const X = [tempMaxNorm, tempMinNorm, umidadeNorm, chuvaNorm];
+
+            // Exibir valores na Matriz X
+            document.getElementById('mX_tempMax').innerText = tempMaxNorm.toFixed(2);
+            document.getElementById('mX_tempMin').innerText = tempMinNorm.toFixed(2);
+            document.getElementById('mX_umidade').innerText = umidadeNorm.toFixed(2);
+            document.getElementById('mX_chuva').innerText = chuvaNorm.toFixed(2);
+
+            // Multiplicação Matricial: S = X · W
+            // S é um vetor [1 x 3]: [Score_Ensolarado, Score_Nublado, Score_Chuvoso]
+            let S = [0, 0, 0];
+            for (let col = 0; col < 3; col++) {
+                let soma = 0;
+                for (let row = 0; row < 4; row++) {
+                    soma += X[row] * MATRIZ_W[row][col];
+                }
+                S[col] = soma;
+            }
+
+            // Exibir Scores
+            const elSun = document.getElementById('scoreSun');
+            const elCloud = document.getElementById('scoreCloud');
+            const elRain = document.getElementById('scoreRain');
+
+            elSun.querySelector('.val').innerText = S[0].toFixed(2);
+            elCloud.querySelector('.val').innerText = S[1].toFixed(2);
+            elRain.querySelector('.val').innerText = S[2].toFixed(2);
+
+            // Resetar destaques visuais
+            [elSun, elCloud, elRain].forEach(el => el.classList.remove('ring-2', 'ring-sky-400', 'bg-sky-500/20'));
+
+            // Determinar a maior pontuação (ArgMax)
+            const maxScoreIndex = S.indexOf(Math.max(...S));
+            const classesNome = [
+                { nome: "Ensolarado", emoji: "☀️", cor: "text-amber-400", el: elSun },
+                { nome: "Nublado", emoji: "☁️", cor: "text-slate-300", el: elCloud },
+                { nome: "Chuvoso", emoji: "🌧️", cor: "text-blue-400", el: elRain }
+            ];
+
+            const resultadoEstimado = classesNome[maxScoreIndex];
+            resultadoEstimado.el.classList.add('ring-2', 'ring-sky-400', 'bg-sky-500/20');
+
+            document.getElementById('matrizResultadoEstimado').innerHTML = `
+                <span>${resultadoEstimado.emoji} ${resultadoEstimado.nome}</span>
+                <span class="text-xs text-slate-400 font-mono font-normal">(Score: ${S[maxScoreIndex].toFixed(2)})</span>
+            `;
+
+            // Classe Oficial da Open-Meteo
+            const climaOficial = classificarClima(dia.codigo);
+            document.getElementById('matrizResultadoOficial').innerHTML = `
+                <span>${climaOficial.emoji} ${climaOficial.descricao}</span>
             `;
         }
 
-        // 3. Geocodificação por nome de cidade
+        // 4. Busca Geográfica por Nome de Cidade
         async function buscarCidade() {
-            var cidade = document.getElementById('cidadeInput').value.trim();
+            const input = document.getElementById('cidadeInput');
+            const cidade = input.value.trim();
             if (!cidade) return;
 
-            var url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=1&language=pt&format=json`;
+            const btn = document.getElementById('btnBuscar');
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = `<span class="animate-spin">🌀</span> Buscando...`;
+            btn.disabled = true;
+
+            const urlGeo = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=1&language=pt&format=json`;
 
             try {
-                var response = await fetch(url);
-                var data = await response.json();
+                const response = await fetch(urlGeo);
+                const data = await response.json();
 
                 if (data.results && data.results.length > 0) {
-                    var local = data.results[0];
-                    var nomeFormatado = `${local.name}${local.country_code ? ', ' + local.country_code.toUpperCase() : ''}`;
-                    carregarDadosAPI(local.latitude, local.longitude, nomeFormatado);
+                    const local = data.results[0];
+                    const pais = local.country_code ? `, ${local.country_code.toUpperCase()}` : '';
+                    const nomeFormatado = `${local.name}${pais}`;
+                    await carregarDadosAPI(local.latitude, local.longitude, nomeFormatado);
                 } else {
-                    alert("Cidade não encontrada!");
+                    mostrarNotificacao("Cidade não encontrada. Tente digitar outro nome.");
                 }
             } catch (error) {
-                alert("Erro ao buscar a cidade.");
+                mostrarNotificacao("Erro ao conectar ao serviço de geocodificação.");
+            } finally {
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
             }
         }
 
-        // 4. Geolocalização do Usuário + Geocodificação Reversa
+        function definirECarregarCidade(nome) {
+            document.getElementById('cidadeInput').value = nome;
+            buscarCidade();
+        }
+
+        // 5. Geolocalização Atual do Usuário
         function obterGeolocalizacao() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    async (pos) => {
-                        const lat = pos.coords.latitude;
-                        const lon = pos.coords.longitude;
-
-                        let nomeCidade = "Sua Localização";
-
-                        try {
-                            const reverseGeoUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`;
-                            const res = await fetch(reverseGeoUrl);
-                            const data = await res.json();
-
-                            if (data.city || data.locality) {
-                                const cidade = data.city || data.locality;
-                                const pais = data.countryCode ? `, ${data.countryCode.toUpperCase()}` : '';
-                                nomeCidade = `${cidade}${pais}`;
-                            }
-                        } catch (e) {
-                            console.warn("Não foi possível obter o nome da cidade por extenso.", e);
-                        }
-
-                        document.getElementById('cidadeInput').value = nomeCidade;
-                        carregarDadosAPI(lat, lon, nomeCidade);
-                    },
-                    () => alert("Permissão de localização negada.")
-                );
-            } else {
-                alert("Navegador não suporta geolocalização.");
+            if (!navigator.geolocation) {
+                mostrarNotificacao("Seu navegador não possui suporte a geolocalização.");
+                return;
             }
+
+            mostrarNotificacao("Obtendo sua localização atual...");
+
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    let nomeCidade = "Sua Posição Atual";
+
+                    try {
+                        const reverseUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`;
+                        const res = await fetch(reverseUrl);
+                        const data = await res.json();
+                        if (data.city || data.locality) {
+                            const cid = data.city || data.locality;
+                            const pais = data.countryCode ? `, ${data.countryCode.toUpperCase()}` : '';
+                            nomeCidade = `${cid}${pais}`;
+                        }
+                    } catch (e) {
+                        console.warn("Reverso de geocodificação indisponível.", e);
+                    }
+
+                    document.getElementById('cidadeInput').value = nomeCidade;
+                    carregarDadosAPI(lat, lon, nomeCidade);
+                },
+                (err) => {
+                    mostrarNotificacao("Permissão de localização negada ou indisponível.");
+                }
+            );
         }
 
-        // Inicializar com cidade padrão ao carregar
+        // Notificações em balão customizado (sem usar alert)
+        function mostrarNotificacao(mensagem) {
+            const existente = document.getElementById('toastNotification');
+            if (existente) existente.remove();
+
+            const toast = document.createElement('div');
+            toast.id = 'toastNotification';
+            toast.className = 'fixed bottom-5 right-5 z-50 bg-slate-800 text-sky-200 border border-sky-500/40 px-4 py-3 rounded-xl shadow-2xl text-xs sm:text-sm flex items-center gap-3 animate-bounce';
+            toast.innerHTML = `
+                <span>ℹ️ ${mensagem}</span>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white font-bold ml-2">✕</button>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast) toast.remove();
+            }, 4000);
+        }
+
+        // Inicialização na montagem do DOM
         window.addEventListener('DOMContentLoaded', () => {
             carregarDadosAPI();
         });

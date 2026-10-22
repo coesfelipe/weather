@@ -246,7 +246,7 @@
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
                         carregarDadosAPI(pos.coords.latitude, pos.coords.longitude, "Sua Localização");
-                        var cidade = data.results[0]?.name || "Sua Localização";
+                        var cidade = local.name || "Sua Localização";
                         document.getElementById('cidadeInput').value = cidade;
                     },
                     () => alert("Permissão de localização negada.")

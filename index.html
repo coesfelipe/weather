@@ -231,7 +231,7 @@
 
                 if (data.results && data.results.length > 0) {
                     var local = data.results[0];
-                    carregarDadosAPI(local.latitude, local.longitude, `${local.name}, ${local.country_code.toUpperCase()}`);
+                    carregarDadosAPI(local.latitude, local.longitude, local.name, local.country_code.toUpperCase());
                 } else {
                     alert("Cidade não encontrada!");
                 }
@@ -245,7 +245,7 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        carregarDadosAPI(pos.coords.latitude, pos.coords.longitude, "Sua Localização");
+                        carregarDadosAPI(pos.coords.latitude, pos.coords.longitude, local.name || "Sua Localização");
                         var cidade = local.name || "Sua Localização";
                         document.getElementById('cidadeInput').value = cidade;
                     },

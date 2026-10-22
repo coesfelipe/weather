@@ -73,8 +73,12 @@
 
                     <div class="bg-slate-900/80 rounded-xl p-4 text-left space-y-3 border border-slate-700/40">
                         <div class="flex items-center justify-between text-sm">
-                            <span class="text-slate-400">🌡️ Temp. Estimada:</span>
-                            <span id="resTemp" class="font-mono font-semibold text-slate-200">-- °C</span>
+                            <span class="text-slate-400">🔥 Temp. Máxima Estimada:</span>
+                            <span id="resTempMax" class="font-mono font-semibold text-rose-400">-- °C</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-400">❄️ Temp. Mínima Estimada:</span>
+                            <span id="resTempMin" class="font-mono font-semibold text-sky-400">-- °C</span>
                         </div>
                         <div class="flex items-center justify-between text-sm">
                             <span class="text-slate-400">💧 Umidade Estimada:</span>
@@ -103,15 +107,16 @@
             document.getElementById('cidadeAtual').innerText = nomeCidade;
             document.getElementById('statusClima').innerText = "Carregando dados...";
 
-            // Solicita 3 dias do passado (past_days=3) + 1 dia atual (forecast_days=1)
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,relative_humidity_2m_mean,precipitation_sum&timezone=auto&past_days=3&forecast_days=1`;
+            // Solicita temperatura máxima e mínima, umidade média e precipitação
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,precipitation_sum&timezone=auto&past_days=3&forecast_days=1`;
 
             try {
                 const response = await fetch(url);
                 const data = await response.json();
 
                 const datas = data.daily.time;
-                const temps = data.daily.temperature_2m_max;
+                const tempsMax = data.daily.temperature_2m_max;
+                const tempsMin = data.daily.temperature_2m_min;
                 const umidades = data.daily.relative_humidity_2m_mean;
                 const chuvas = data.daily.precipitation_sum;
 
@@ -133,8 +138,8 @@
                     htmlHistorico += `
                         <div class="p-3 rounded-xl border ${destaque} text-xs flex justify-between items-center">
                             <div>
-                                <span class="font-semibold block ${i === 3 ? 'text-sky-400' : 'text-slate-300'}">${tagDia} </span>
-                                <span class="text-slate-400">🌡️ ${temps[i].toFixed(1)}°C | 💧 ${umidades[i].toFixed(0)}%</span>
+                                <span class="font-semibold block ${i === 3 ? 'text-sky-400' : 'text-slate-300'}">${tagDia}</span>
+                                <span class="text-slate-400">🔥 ${tempsMax[i].toFixed(1)}°C | ❄️ ${tempsMin[i].toFixed(1)}°C | 💧 ${umidades[i].toFixed(0)}%</span>
                             </div>
                             <span class="font-mono text-slate-300">🌧️ ${chuvas[i].toFixed(1)} mm</span>
                         </div>
@@ -142,9 +147,10 @@
                 }
                 document.getElementById('listaHistorico').innerHTML = htmlHistorico;
 
-                // Montar Matriz 3x4 internamente para cálculo
+                // Montar dados para o cálculo matricial (Temp Max, Temp Min, Umidade, Chuva)
                 const matriz = [
-                    [temps[0], temps[1], temps[2], temps[3]],
+                    [tempsMax[0], tempsMax[1], tempsMax[2], tempsMax[3]],
+                    [tempsMin[0], tempsMin[1], tempsMin[2], tempsMin[3]],
                     [umidades[0], umidades[1], umidades[2], umidades[3]],
                     [chuvas[0], chuvas[1], chuvas[2], chuvas[3]]
                 ];
@@ -159,7 +165,7 @@
 
         // 2. Cálculo Matricial e Projeção do 5º Dia (Amanhã)
         function calcularProjeçãoAmanha(m) {
-            // Submatriz 3x3 dos 3 dias mais recentes (Dia 2, Dia 3 e Hoje/Dia 4)
+            // Submatriz 3x3 dos 3 dias mais recentes usando Máxima, Mínima e Umidade
             const sub = [
                 [m[0][1], m[0][2], m[0][3]],
                 [m[1][1], m[1][2], m[1][3]],
@@ -178,11 +184,17 @@
             const determinante = (dP1 + dP2 + dP3) - (dS1 + dS2 + dS3);
 
             // Projeção do 5º Dia (Amanhã): Variação entre Hoje (Dia 4) e Ontem (Dia 3)
-            let temp_estimada    = m[0][3] + (m[0][3] - m[0][2]);
-            let umidade_estimada = m[1][3] + (m[1][3] - m[1][2]);
-            let chuva_estimada   = m[2][3] + (m[2][3] - m[2][2]);
+            let temp_max_estimada = m[0][3] + (m[0][3] - m[0][2]);
+            let temp_min_estimada = m[1][3] + (m[1][3] - m[1][2]);
+            let umidade_estimada  = m[2][3] + (m[2][3] - m[2][2]);
+            let chuva_estimada    = m[3][3] + (m[3][3] - m[3][2]);
 
-            // Limites físicos
+            // Validações físicas simples (mínima não pode superar a máxima)
+            if (temp_min_estimada > temp_max_estimada) {
+                const tempAux = temp_min_estimada;
+                temp_min_estimada = temp_max_estimada;
+                temp_max_estimada = tempAux;
+            }
             if (umidade_estimada > 100.0) umidade_estimada = 100.0;
             if (umidade_estimada < 0.0)   umidade_estimada = 0.0;
             if (chuva_estimada < 0.0)     chuva_estimada = 0.0;
@@ -203,7 +215,8 @@
             // Atualização no DOM
             document.getElementById('emojiClima').innerText = emoji;
             document.getElementById('statusClima').innerText = estado_estimado;
-            document.getElementById('resTemp').innerText = temp_estimada.toFixed(2) + " °C";
+            document.getElementById('resTempMax').innerText = temp_max_estimada.toFixed(2) + " °C";
+            document.getElementById('resTempMin').innerText = temp_min_estimada.toFixed(2) + " °C";
             document.getElementById('resUmidade').innerText = umidade_estimada.toFixed(2) + " %";
             document.getElementById('resChuva').innerText = chuva_estimada.toFixed(2) + " mm";
             document.getElementById('resDet').innerText = determinante.toFixed(2);
@@ -251,7 +264,6 @@
 
                         let nomeCidade = "Sua Localização";
 
-                        // Busca reversa para pegar o nome da cidade via coordenadas GPS
                         try {
                             const reverseGeoUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`;
                             const res = await fetch(reverseGeoUrl);
@@ -266,7 +278,6 @@
                             console.warn("Não foi possível obter o nome da cidade por extenso.", e);
                         }
 
-                        // Atualiza o input e executa a atualização dos dados
                         document.getElementById('cidadeInput').value = nomeCidade;
                         carregarDadosAPI(lat, lon, nomeCidade);
                     },

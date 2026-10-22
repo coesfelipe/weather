@@ -220,17 +220,17 @@
 
         // 3. Geocodificação por nome de cidade
         async function buscarCidade() {
-            const cidade = document.getElementById('cidadeInput').value.trim();
+            var cidade = document.getElementById('cidadeInput').value.trim();
             if (!cidade) return;
 
-            const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=1&language=pt&format=json`;
+            var url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=1&language=pt&format=json`;
 
             try {
-                const response = await fetch(url);
-                const data = await response.json();
+                var response = await fetch(url);
+                var data = await response.json();
 
                 if (data.results && data.results.length > 0) {
-                    const local = data.results[0];
+                    var local = data.results[0];
                     carregarDadosAPI(local.latitude, local.longitude, `${local.name}, ${local.country_code.toUpperCase()}`);
                 } else {
                     alert("Cidade não encontrada!");
@@ -245,8 +245,9 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        document.getElementById('cidadeInput').value = "Sua Localização";
                         carregarDadosAPI(pos.coords.latitude, pos.coords.longitude, "Sua Localização");
+                        var cidade = data.results[0]?.name || "Sua Localização";
+                        document.getElementById('cidadeInput').value = cidade;
                     },
                     () => alert("Permissão de localização negada.")
                     

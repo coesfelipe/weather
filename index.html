@@ -232,7 +232,7 @@
 
             // 3. Status estimado e Emoji
             let estado_estimado, emoji;
-            if (chuva_estimada > 0.5) {
+            if (chuva_estimada >= 10.0 && umidade_estimada >= 70.0) {
                 estado_estimado = "Chuvoso";
                 emoji = "🌧️";
             } else if (umidade_estimada >= 75.0) {

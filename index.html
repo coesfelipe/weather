@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Previsão Climática Matricial (3x3 - Regra de Sarrus)</title>
+    <!-- Tailwind CSS para estilização moderna e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Ocultar setas padrão de inputs de número para um visual mais limpo */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 flex flex-col justify-between">
+
+    <div class="max-w-5xl mx-auto w-full">
+        <!-- Cabeçalho -->
+        <header class="text-center mb-8">
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-sky-500/10 text-sky-400 rounded-full text-sm font-medium border border-sky-500/20 mb-3">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                Álgebra Linear aplicada à Meteorologia
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">Previsão de Tempo por Matriz 3x3</h1>
+            <p class="text-slate-400 mt-2 max-w-xl mx-auto text-sm md:text-base">
+                Insira os dados climáticos dos últimos 3 dias para calcular o determinante via Regra de Sarrus e projetar a tendência para o 4º dia.
+            </p>
+        </header>
+
+        <!-- Container Principal (Formulário + Resultado) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Painel Esquerdo: Entrada de Dados (Formulário) -->
+            <div class="lg:col-span-7 bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl p-6 shadow-xl">
+                <form id="climaForm" onsubmit="event.preventDefault(); calcularPrevisao();">
+                    
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                            <span>📊</span> Matriz de Dados Históricos
+                        </h2>
+                        <button type="button" onclick="restaurarPadrao()" class="text-xs text-sky-400 hover:text-sky-300 transition-colors underline">
+                            Restaurar Padrão
+                        </button>
+                    </div>
+
+                    <!-- Tabela/Grid de Inputs da Matriz -->
+                    <div class="overflow-x-auto mb-6">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-slate-400 text-xs border-b border-slate-700">
+                                    <th class="py-2 px-3 font-medium">Métrica / Variável</th>
+                                    <th class="py-2 px-3 font-medium text-center">Dia 1</th>
+                                    <th class="py-2 px-3 font-medium text-center">Dia 2</th>
+                                    <th class="py-2 px-3 font-medium text-center">Dia 3</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-700/50">
+                                <!-- Linha 0: Temperatura -->
+                                <tr>
+                                    <td class="py-3 px-3 text-sm font-medium text-slate-200">
+                                        🌡️ Temp (°C)
+                                    </td>
+                                    <td class="p-1">
+                                        <input type="number" step="0.01" id="m00" value="30.50" required class="w-full bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-lg py-2 px-2 text-center text-sm text-slate-100 font-mono transition">
+                                    </td>
+                                    <td class="p-1">
+                                        <input type="number" step="0.01" id="m01" value="28.20" required class="w-full bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-lg py-2 px-2 text-center text-sm text-slate-100 font-mono transition">
+                                    </td>
+                                    <td class="p-1">
+                                        <input type="number" step="0.01" id="m02" value="25.00" required class="w-full bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-lg py-2 px-2 text-center text-sm text-slate-100 font-mono transition">
+                                    </td>
+                                </tr>
+
+                                <!-- Linha 1: Umidade -->
+                                <tr>
+                                    <td class="py-3 px-3 text-sm font-medium text-slate-200">
+                                        💧 Umidade (%)
+                                    </td>
+                                    <td class="p-1">
+                                        <input type="number" step="0.01" id="m10" value="80.00" min="0" max="100" required class="w-full bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-lg py-2 px-2 text-center text-sm text-slate-100 font-mono transition">
+                                    </td>
+                                    <td class="p-1">
+                                        <input type="number" step="0.01" id="m11" value="85.50" min="0" max="100" required class="w-full bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-lg py-2 px-2 text-center text-sm text-slate-100 font-mono transition">
+                                    </td>
+                                    <td class="p-1">
+                                        <input type="number" step="0.01" id="m12" value="90.20" min="0" max="100" required class="w-full bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-lg py-2 px-2 text-center text-sm text-slate-100 font-mono transition">
+                                    </td>
+                                </tr>
+
+                                <!-- Linha 2: Chuva -->
+                                <tr>
+                                    <td class="py-3 px-3 text-sm font-medium text-slate-200">
+                                        🌧️ Chuva (mm)
+                                    </td>
+                                    <td class="p-1">
+                                        <input type="number" step="0.01" id="m20" value="0.00" min="0" required class="w-full bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-lg py-2 px-2 text-center text-sm text-slate-100 font-mono transition">
+                                    </td>
+                                    <td class="p-1">
+                                        <input type="number" step="0.01" id="m21" value="5.20" min="0" required class="w-full bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-lg py-2 px-2 text-center text-sm text-slate-100 font-mono transition">
+                                    </td>
+                                    <td class="p-1">
+                                        <input type="number" step="0.01" id="m22" value="12.40" min="0" required class="w-full bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-lg py-2 px-2 text-center text-sm text-slate-100 font-mono transition">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 px-4 bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-slate-950 font-semibold rounded-xl transition shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2">
+                        <span>⚡</span> Recalcular Previsão
+                    </button>
+                </form>
+            </div>
+
+            <!-- Painel Direito: Card de Resultado da Previsão -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
+                <div class="bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl p-6 shadow-xl relative overflow-hidden text-center">
+                    
+                    <!-- Badge de Nível de Confiança -->
+                    <div class="flex justify-center mb-4">
+                        <span id="badgeConfianca" class="px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border">
+                            --
+                        </span>
+                    </div>
+
+                    <h3 class="text-xs font-semibold text-slate-400 tracking-wider uppercase mb-1">Estimativa para o 4º Dia</h3>
+                    
+                    <!-- Ícone Grande e Status Principal -->
+                    <div id="emojiClima" class="text-7xl my-4 transform hover:scale-110 transition duration-300 inline-block">
+                        ☁️
+                    </div>
+                    
+                    <div id="statusClima" class="text-2xl font-bold text-white mb-6">
+                        Calculando...
+                    </div>
+
+                    <!-- Métricas Detalhadas do 4º Dia -->
+                    <div class="bg-slate-900/80 rounded-xl p-4 text-left space-y-3 border border-slate-700/40">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-400 flex items-center gap-2">🌡️ Temp. Estimada:</span>
+                            <span id="resTemp" class="font-mono font-semibold text-slate-200">-- °C</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-400 flex items-center gap-2">💧 Umidade Estimada:</span>
+                            <span id="resUmidade" class="font-mono font-semibold text-slate-200">-- %</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-400 flex items-center gap-2">🌧️ Chuva Esperada:</span>
+                            <span id="resChuva" class="font-mono font-semibold text-slate-200">-- mm</span>
+                        </div>
+                    </div>
+
+                    <!-- Detalhes Matemáticos da Matriz (Determinante) -->
+                    <div class="mt-4 pt-4 border-t border-slate-700/60 text-xs text-slate-400 flex justify-between items-center">
+                        <span>Determinante (Sarrus):</span>
+                        <span id="resDet" class="font-mono font-bold text-sky-400">0.00</span>
+                    </div>
+                </div>
+
+                <!-- Card de Explicação Rápida -->
+                <div class="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 text-xs text-slate-400 space-y-1">
+                    <p class="font-semibold text-slate-300 mb-1">📐 Como o cálculo funciona:</p>
+                    <p>• <b>Projeção do 4º Dia:</b> Tendência baseada na variação dos dias 2 e 3.</p>
+                    <p>• <b>Estabilidade (Sarrus):</b> Valora a variação global das variáveis climáticas (|Det| < 50 indica Alta Confiança).</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="mt-12 text-center text-xs text-slate-500">
+        Desenvolvido com HTML5, Tailwind CSS e JavaScript Vanilla
+    </footer>
+
+    <!-- Lógica JS da Aplicação -->
+    <script>
+        function obterMatriz() {
+            return [
+                [
+                    parseFloat(document.getElementById('m00').value) || 0,
+                    parseFloat(document.getElementById('m01').value) || 0,
+                    parseFloat(document.getElementById('m02').value) || 0
+                ],
+                [
+                    parseFloat(document.getElementById('m10').value) || 0,
+                    parseFloat(document.getElementById('m11').value) || 0,
+                    parseFloat(document.getElementById('m12').value) || 0
+                ],
+                [
+                    parseFloat(document.getElementById('m20').value) || 0,
+                    parseFloat(document.getElementById('m21').value) || 0,
+                    parseFloat(document.getElementById('m22').value) || 0
+                ]
+            ];
+        }
+
+        function calcularPrevisao() {
+            const dados_clima = obterMatriz();
+
+            // 1. Calcular o Determinante 3x3 (Regra de Sarrus)
+            const diag_principal1 = dados_clima[0][0] * dados_clima[1][1] * dados_clima[2][2];
+            const diag_principal2 = dados_clima[0][1] * dados_clima[1][2] * dados_clima[2][0];
+            const diag_principal3 = dados_clima[0][2] * dados_clima[1][0] * dados_clima[2][1];
+
+            const diag_secundaria1 = dados_clima[0][2] * dados_clima[1][1] * dados_clima[2][0];
+            const diag_secundaria2 = dados_clima[0][0] * dados_clima[1][2] * dados_clima[2][1];
+            const diag_secundaria3 = dados_clima[0][1] * dados_clima[1][0] * dados_clima[2][2];
+
+            const determinante = (diag_principal1 + diag_principal2 + diag_principal3) - 
+                                 (diag_secundaria1 + diag_secundaria2 + diag_secundaria3);
+
+            // 2. Estimativa para o 4º Dia
+            let temp_estimada    = dados_clima[0][2] + (dados_clima[0][2] - dados_clima[0][1]);
+            let umidade_estimada = dados_clima[1][2] + (dados_clima[1][2] - dados_clima[1][1]);
+            let chuva_estimada   = dados_clima[2][2] + (dados_clima[2][2] - dados_clima[2][1]);
+
+            // Travas de segurança (Limites físicos)
+            if (umidade_estimada > 100.0) umidade_estimada = 100.0;
+            if (umidade_estimada < 0.0)   umidade_estimada = 0.0;
+            if (chuva_estimada < 0.0)     chuva_estimada = 0.0;
+
+            // 3. Status estimado e Emoji
+            let estado_estimado, emoji;
+            if (chuva_estimada > 0.5) {
+                estado_estimado = "Chuvoso";
+                emoji = "🌧️";
+            } else if (umidade_estimada >= 75.0) {
+                estado_estimado = "Nublado";
+                emoji = "☁️";
+            } else {
+                estado_estimado = "Ensolarado";
+                emoji = "☀️";
+            }
+
+            // 4. Confiança com base no Determinante
+            const absDet = Math.abs(determinante);
+            const altaConfianca = absDet < 50.0;
+
+            // Atualização da Interface Visual (DOM)
+            document.getElementById('emojiClima').innerText = emoji;
+            document.getElementById('statusClima').innerText = estado_estimado;
+            document.getElementById('resTemp').innerText = temp_estimada.toFixed(2) + " °C";
+            document.getElementById('resUmidade').innerText = umidade_estimada.toFixed(2) + " %";
+            document.getElementById('resChuva').innerText = chuva_estimada.toFixed(2) + " mm";
+            document.getElementById('resDet').innerText = determinante.toFixed(2);
+
+            const badge = document.getElementById('badgeConfianca');
+            if (altaConfianca) {
+                badge.innerText = "Alta Confiança";
+                badge.className = "px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+            } else {
+                badge.innerText = "Baixa Confiança";
+                badge.className = "px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border bg-amber-500/10 text-amber-400 border-amber-500/20";
+            }
+        }
+
+        function restaurarPadrao() {
+            document.getElementById('m00').value = "30.50";
+            document.getElementById('m01').value = "28.20";
+            document.getElementById('m02').value = "25.00";
+
+            document.getElementById('m10').value = "80.00";
+            document.getElementById('m11').value = "85.50";
+            document.getElementById('m12').value = "90.20";
+
+            document.getElementById('m20').value = "0.00";
+            document.getElementById('m21').value = "5.20";
+            document.getElementById('m22').value = "12.40";
+
+            calcularPrevisao();
+        }
+
+        // Executar cálculo inicial ao carregar a página
+        window.addEventListener('DOMContentLoaded', () => {
+            calcularPrevisao();
+
+            // Adicionar atualização dinâmica instantânea nos inputs ao digitar/alterar
+            const inputs = document.querySelectorAll('#climaForm input');
+            inputs.forEach(input => {
+                input.addEventListener('input', calcularPrevisao);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -3,28 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Previsão Climática Matricial - API Real + 5º Dia</title>
+    <title>Previsão para Amanhã (5º Dia) via Matriz</title>
+    <!-- Tailwind CSS para visual moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type="number"] { -moz-appearance: textfield; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 flex flex-col justify-between">
 
-    <div class="max-w-6xl mx-auto w-full">
+    <div class="max-w-4xl mx-auto w-full">
         <!-- Cabeçalho -->
         <header class="text-center mb-8">
             <div class="inline-flex items-center gap-2 px-3 py-1 bg-sky-500/10 text-sky-400 rounded-full text-sm font-medium border border-sky-500/20 mb-3">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                API Open-Meteo + Álgebra Linear
+                API Open-Meteo + Regra de Sarrus
             </div>
-            <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">Previsão Climática para o 5º Dia</h1>
-            <p class="text-slate-400 mt-2 max-w-2xl mx-auto text-sm md:text-base">
-                Obtemos a previsão oficial para os primeiros 4 dias via API e projetamos a tendência do 5º dia utilizando a matriz $3 \times 3$ dos 3 dias mais recentes (Regra de Sarrus).
+            <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">Previsão Automática para Amanhã</h1>
+            <p class="text-slate-400 mt-2 max-w-xl mx-auto text-sm md:text-base">
+                Analisamos os dados dos últimos 3 dias + o dia de hoje (API) para calcular a tendência e projetar o tempo para amanhã.
             </p>
         </header>
 
@@ -32,7 +30,7 @@
         <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-4 mb-8 shadow-xl flex flex-col sm:flex-row items-center gap-4 justify-between">
             <div class="flex items-center gap-2 w-full sm:w-auto">
                 <span class="text-xl">📍</span>
-                <input type="text" id="cidadeInput" placeholder="Digite uma cidade (ex: São Paulo)" value="São Paulo" class="bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl px-4 py-2 text-sm text-slate-100 w-full sm:w-64">
+                <input type="text" id="cidadeInput" placeholder="Digite uma cidade..." value="São Paulo" class="bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl px-4 py-2 text-sm text-slate-100 w-full sm:w-64">
                 <button onclick="buscarCidade()" class="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold rounded-xl text-sm transition">
                     Buscar
                 </button>
@@ -43,72 +41,35 @@
             </button>
         </div>
 
-        <!-- Grid Principal -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <!-- Conteúdo Principal -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
             
-            <!-- Painel Esquerdo: Matriz de Dados (4 Dias) -->
-            <div class="lg:col-span-7 bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl p-6 shadow-xl">
+            <!-- Painel Esquerdo: Histórico Coletado Automaticamente -->
+            <div class="md:col-span-5 bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl p-6 shadow-xl">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                        <span>📊</span> Matriz de Dados (API + Edição)
+                    <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                        <span>📊</span> Histórico Recente (API)
                     </h2>
                     <span id="cidadeAtual" class="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded-md">São Paulo, BR</span>
                 </div>
 
-                <div class="overflow-x-auto mb-6">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="text-slate-400 text-xs border-b border-slate-700">
-                                <th class="py-2 px-2 font-medium">Métrica</th>
-                                <th class="py-2 px-2 font-medium text-center">Dia 1</th>
-                                <th class="py-2 px-2 font-medium text-center">Dia 2</th>
-                                <th class="py-2 px-2 font-medium text-center">Dia 3</th>
-                                <th class="py-2 px-2 font-medium text-center text-sky-400">Dia 4 (API)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-700/50">
-                            <tr>
-                                <td class="py-3 px-2 text-xs font-medium text-slate-200">🌡️ Temp (°C)</td>
-                                <td class="p-1"><input type="number" step="0.1" id="m00" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 text-center text-xs text-slate-100 font-mono"></td>
-                                <td class="p-1"><input type="number" step="0.1" id="m01" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 text-center text-xs text-slate-100 font-mono"></td>
-                                <td class="p-1"><input type="number" step="0.1" id="m02" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 text-center text-xs text-slate-100 font-mono"></td>
-                                <td class="p-1"><input type="number" step="0.1" id="m03" class="w-full bg-slate-900 border border-sky-500/50 rounded-lg py-1.5 text-center text-xs text-sky-300 font-mono"></td>
-                            </tr>
-                            <tr>
-                                <td class="py-3 px-2 text-xs font-medium text-slate-200">💧 Umidade (%)</td>
-                                <td class="p-1"><input type="number" step="0.1" id="m10" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 text-center text-xs text-slate-100 font-mono"></td>
-                                <td class="p-1"><input type="number" step="0.1" id="m11" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 text-center text-xs text-slate-100 font-mono"></td>
-                                <td class="p-1"><input type="number" step="0.1" id="m12" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 text-center text-xs text-slate-100 font-mono"></td>
-                                <td class="p-1"><input type="number" step="0.1" id="m13" class="w-full bg-slate-900 border border-sky-500/50 rounded-lg py-1.5 text-center text-xs text-sky-300 font-mono"></td>
-                            </tr>
-                            <tr>
-                                <td class="py-3 px-2 text-xs font-medium text-slate-200">🌧️ Chuva (mm)</td>
-                                <td class="p-1"><input type="number" step="0.1" id="m20" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 text-center text-xs text-slate-100 font-mono"></td>
-                                <td class="p-1"><input type="number" step="0.1" id="m21" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 text-center text-xs text-slate-100 font-mono"></td>
-                                <td class="p-1"><input type="number" step="0.1" id="m22" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-1.5 text-center text-xs text-slate-100 font-mono"></td>
-                                <td class="p-1"><input type="number" step="0.1" id="m23" class="w-full bg-slate-900 border border-sky-500/50 rounded-lg py-1.5 text-center text-xs text-sky-300 font-mono"></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div id="listaHistorico" class="space-y-3">
+                    <div class="text-center py-6 text-slate-500 text-xs">Carregando dados da API...</div>
                 </div>
-
-                <button onclick="calcularPrevisao()" class="w-full py-3 px-4 bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold rounded-xl transition shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2">
-                    ⚡ Recalcular Projeção do 5º Dia
-                </button>
             </div>
 
-            <!-- Painel Direito: Resultado da Projeção para o 5º Dia -->
-            <div class="lg:col-span-5 flex flex-col gap-4">
-                <div class="bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl p-6 shadow-xl relative text-center">
+            <!-- Painel Direito: Projeção para Amanhã (5º Dia) -->
+            <div class="md:col-span-7">
+                <div class="bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl p-6 shadow-xl text-center relative">
                     
                     <div class="flex justify-center mb-4">
                         <span id="badgeConfianca" class="px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border">--</span>
                     </div>
 
-                    <h3 class="text-xs font-semibold text-sky-400 tracking-wider uppercase mb-1">Projeção Matricial do 5º Dia</h3>
+                    <h3 class="text-xs font-semibold text-sky-400 tracking-wider uppercase mb-1">Projeção para Amanhã (5º Dia)</h3>
                     
                     <div id="emojiClima" class="text-7xl my-3 inline-block">☁️</div>
-                    <div id="statusClima" class="text-2xl font-bold text-white mb-6">Carregando API...</div>
+                    <div id="statusClima" class="text-2xl font-bold text-white mb-6">Carregando...</div>
 
                     <div class="bg-slate-900/80 rounded-xl p-4 text-left space-y-3 border border-slate-700/40">
                         <div class="flex items-center justify-between text-sm">
@@ -126,124 +87,98 @@
                     </div>
 
                     <div class="mt-4 pt-4 border-t border-slate-700/60 text-xs text-slate-400 flex justify-between items-center">
-                        <span>Determinante Submatriz 3x3 (Dias 2-4):</span>
+                        <span>Determinante Submatriz 3x3 (Últimos 3 dias):</span>
                         <span id="resDet" class="font-mono font-bold text-sky-400">0.00</span>
                     </div>
-                </div>
-
-                <div class="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 text-xs text-slate-400 space-y-1">
-                    <p class="font-semibold text-slate-300 mb-1">📐 Como é calculado o 5º Dia:</p>
-                    <p>• <b>API:</b> Alimenta os Dias 1 a 4 com dados meteorológicos reais.</p>
-                    <p>• <b>Regra de Sarrus:</b> É aplicada à submatriz $3 \times 3$ dos Dias 2, 3 e 4 para avaliar a estabilidade do sistema.</p>
-                    <p>• <b>Tendência Linear:</b> Projetada a partir dos dados do Dia 4 e do Dia 3.</p>
                 </div>
             </div>
 
         </div>
     </div>
 
+    <!-- Script JavaScript -->
     <script>
-        // 1. Buscar Dados na API Open-Meteo
+        // 1. Função para carregar dados históricos + hoje da API Open-Meteo
         async function carregarDadosAPI(lat = -23.5505, lon = -46.6333, nomeCidade = "São Paulo, BR") {
             document.getElementById('cidadeAtual').innerText = nomeCidade;
-            document.getElementById('statusClima').innerText = "Buscando dados da API...";
+            document.getElementById('statusClima').innerText = "Carregando dados...";
 
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,relative_humidity_2m_mean,precipitation_sum&timezone=auto&forecast_days=4`;
+            // Solicita 3 dias do passado (past_days=3) + 1 dia atual (forecast_days=1)
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,relative_humidity_2m_mean,precipitation_sum&timezone=auto&past_days=3&forecast_days=1`;
 
             try {
                 const response = await fetch(url);
                 const data = await response.json();
 
+                const datas = data.daily.time;
                 const temps = data.daily.temperature_2m_max;
                 const umidades = data.daily.relative_humidity_2m_mean;
                 const chuvas = data.daily.precipitation_sum;
 
-                // Preencher a matriz de 4 colunas no formulário
-                for (let j = 0; j < 4; j++) {
-                    document.getElementById(`m0${j}`).value = temps[j].toFixed(2);
-                    document.getElementById(`m1${j}`).value = umidades[j].toFixed(2);
-                    document.getElementById(`m2${j}`).value = chuvas[j].toFixed(2);
-                }
+                // Montar HTML do Histórico para os 4 dias
+                let htmlHistorico = '';
+                for (let i = 0; i < 4; i++) {
+                    const tagDia = i === 3 ? 'Hoje (Dia 4)' : `Dia ${i + 1}`;
+                    const destaque = i === 3 ? 'border-sky-500/50 bg-sky-500/10' : 'border-slate-700/40 bg-slate-900/50';
 
-                calcularPrevisao();
+                    htmlHistorico += `
+                        <div class="p-3 rounded-xl border ${destaque} text-xs flex justify-between items-center">
+                            <div>
+                                <span class="font-semibold block ${i === 3 ? 'text-sky-400' : 'text-slate-300'}">${tagDia} (${datas[i]})</span>
+                                <span class="text-slate-400">🌡️ ${temps[i].toFixed(1)}°C | 💧 ${umidades[i].toFixed(0)}%</span>
+                            </div>
+                            <span class="font-mono text-slate-300">🌧️ ${chuvas[i].toFixed(1)} mm</span>
+                        </div>
+                    `;
+                }
+                document.getElementById('listaHistorico').innerHTML = htmlHistorico;
+
+                // Montar Matriz 3x4 internamente para cálculo
+                const matriz = [
+                    [temps[0], temps[1], temps[2], temps[3]],
+                    [umidades[0], umidades[1], umidades[2], umidades[3]],
+                    [chuvas[0], chuvas[1], chuvas[2], chuvas[3]]
+                ];
+
+                calcularProjeçãoAmanha(matriz);
+
             } catch (error) {
-                alert("Erro ao buscar dados da API. Usando dados padrão.");
+                alert("Erro ao buscar dados da API.");
                 console.error(error);
             }
         }
 
-        // 2. Geocodificação para buscar cidades por nome
-        async function buscarCidade() {
-            const cidade = document.getElementById('cidadeInput').value.trim();
-            if (!cidade) return;
-
-            const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=1&language=pt&format=json`;
-
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-
-                if (data.results && data.results.length > 0) {
-                    const local = data.results[0];
-                    carregarDadosAPI(local.latitude, local.longitude, `${local.name}, ${local.country_code.toUpperCase()}`);
-                } else {
-                    alert("Cidade não encontrada!");
-                }
-            } catch (error) {
-                alert("Erro ao geocodificar cidade.");
-            }
-        }
-
-        // 3. Obter Geolocalização do Navegador
-        function obterGeolocalizacao() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => carregarDadosAPI(pos.coords.latitude, pos.coords.longitude, "Sua Localização"),
-                    () => alert("Permissão de localização negada.")
-                );
-            } else {
-                alert("Geolocalização não suportada pelo navegador.");
-            }
-        }
-
-        // 4. Cálculo de Álgebra Linear e Projeção do 5º Dia
-        function calcularPrevisao() {
-            // Obter matriz 3x4 (3 variáveis x 4 dias)
-            const m = [
-                [parseFloat(document.getElementById('m00').value), parseFloat(document.getElementById('m01').value), parseFloat(document.getElementById('m02').value), parseFloat(document.getElementById('m03').value)],
-                [parseFloat(document.getElementById('m10').value), parseFloat(document.getElementById('m11').value), parseFloat(document.getElementById('m12').value), parseFloat(document.getElementById('m13').value)],
-                [parseFloat(document.getElementById('m20').value), parseFloat(document.getElementById('m21').value), parseFloat(document.getElementById('m22').value), parseFloat(document.getElementById('m23').value)]
-            ];
-
-            // Submatriz 3x3 composta pelos 3 dias mais recentes (Dia 2, Dia 3 e Dia 4)
-            const submatriz = [
+        // 2. Cálculo Matricial e Projeção do 5º Dia (Amanhã)
+        function calcularProjeçãoAmanha(m) {
+            // Submatriz 3x3 dos 3 dias mais recentes (Dia 2, Dia 3 e Hoje/Dia 4)
+            const sub = [
                 [m[0][1], m[0][2], m[0][3]],
                 [m[1][1], m[1][2], m[1][3]],
                 [m[2][1], m[2][2], m[2][3]]
             ];
 
-            // Determinante via Regra de Sarrus da Submatriz dos 3 últimos dias
-            const dP1 = submatriz[0][0] * submatriz[1][1] * submatriz[2][2];
-            const dP2 = submatriz[0][1] * submatriz[1][2] * submatriz[2][0];
-            const dP3 = submatriz[0][2] * submatriz[1][0] * submatriz[2][1];
+            // Regra de Sarrus
+            const dP1 = sub[0][0] * sub[1][1] * sub[2][2];
+            const dP2 = sub[0][1] * sub[1][2] * sub[2][0];
+            const dP3 = sub[0][2] * sub[1][0] * sub[2][1];
 
-            const dS1 = submatriz[0][2] * submatriz[1][1] * submatriz[2][0];
-            const dS2 = submatriz[0][0] * submatriz[1][2] * submatriz[2][1];
-            const dS3 = submatriz[0][1] * submatriz[1][0] * submatriz[2][2];
+            const dS1 = sub[0][2] * sub[1][1] * sub[2][0];
+            const dS2 = sub[0][0] * sub[1][2] * sub[2][1];
+            const dS3 = sub[0][1] * sub[1][0] * sub[2][2];
 
             const determinante = (dP1 + dP2 + dP3) - (dS1 + dS2 + dS3);
 
-            // Projeção do 5º Dia (Dia 4 + variação do Dia 3 para o Dia 4)
+            // Projeção do 5º Dia (Amanhã): Variação entre Hoje (Dia 4) e Ontem (Dia 3)
             let temp_estimada    = m[0][3] + (m[0][3] - m[0][2]);
             let umidade_estimada = m[1][3] + (m[1][3] - m[1][2]);
             let chuva_estimada   = m[2][3] + (m[2][3] - m[2][2]);
 
-            // Limites físicos de segurança
+            // Limites físicos
             if (umidade_estimada > 100.0) umidade_estimada = 100.0;
             if (umidade_estimada < 0.0)   umidade_estimada = 0.0;
             if (chuva_estimada < 0.0)     chuva_estimada = 0.0;
 
-            // Classificação do tempo para o 5º Dia (Regra ajustada para considerar a umidade)
+            // Classificação do Estado do Tempo
             let estado_estimado, emoji;
             if (chuva_estimada >= 5.0 && umidade_estimada >= 70.0) {
                 estado_estimado = "Chuvoso";
@@ -256,7 +191,7 @@
                 emoji = "☀️";
             }
 
-            // Atualização do DOM
+            // Atualização no DOM
             document.getElementById('emojiClima').innerText = emoji;
             document.getElementById('statusClima').innerText = estado_estimado;
             document.getElementById('resTemp').innerText = temp_estimada.toFixed(2) + " °C";
@@ -274,14 +209,43 @@
             }
         }
 
-        // Inicialização
+        // 3. Geocodificação por nome de cidade
+        async function buscarCidade() {
+            const cidade = document.getElementById('cidadeInput').value.trim();
+            if (!cidade) return;
+
+            const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=1&language=pt&format=json`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    const local = data.results[0];
+                    carregarDadosAPI(local.latitude, local.longitude, `${local.name}, ${local.country_code.toUpperCase()}`);
+                } else {
+                    alert("Cidade não encontrada!");
+                }
+            } catch (error) {
+                alert("Erro ao buscar a cidade.");
+            }
+        }
+
+        // 4. Geolocalização do Usuário
+        function obterGeolocalizacao() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => carregarDadosAPI(pos.coords.latitude, pos.coords.longitude, "Sua Localização"),
+                    () => alert("Permissão de localização negada.")
+                );
+            } else {
+                alert("Navegador não suporta geolocalização.");
+            }
+        }
+
+        // Inicializar com cidade padrão ao carregar
         window.addEventListener('DOMContentLoaded', () => {
             carregarDadosAPI();
-
-            // Atualização ao alterar qualquer input manualmente
-            document.querySelectorAll('table input').forEach(input => {
-                input.addEventListener('input', calcularPrevisao);
-            });
         });
     </script>
 </body>

@@ -235,8 +235,13 @@
         function obterGeolocalizacao() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    (pos) => carregarDadosAPI(pos.coords.latitude, pos.coords.longitude, "Sua Localização"),
+                    (pos) => {
+                        document.getElementById('cidadeInput').value = "Sua Localização";
+                        carregarDadosAPI(pos.coords.latitude, pos.coords.longitude, "Sua Localização");
+                        document.getElementById('cidadeInput').value = navigator.geolocation;
+                    },
                     () => alert("Permissão de localização negada.")
+                    
                 );
             } else {
                 alert("Navegador não suporta geolocalização.");

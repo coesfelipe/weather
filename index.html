@@ -365,7 +365,11 @@
 
     </div>
 
-    <!-- Script JavaScript Principal -->
+    <!-- Basicamente essa é a parte do codigo na qual temos, a seguinte lógica por trás. Para que escolhermos 
+     as cidades pelos nomes e não por coordenadas foi utilizada a API gratuita GEOCODING para retornar as coordenadas
+     das cidades a partir do nome. Com essas coordenadas vamos aplicar elas em outra API gratuita chamada Open Meteo.
+     A funcionalidade dessa API é retornar temperaturas maxima e minima, umidade, precipitação 
+      -->
     <script>
         // Armazenamento global de dados carregados
         let globalDadosDiarios = [];
@@ -380,7 +384,8 @@
             [-0.80,  0.20,  0.90]  // Chuva
         ];
 
-        // 1. Carrega os dados da API Open-Meteo
+        // 1. Carrega os dados da API Open-Meteo. E passada as coordenadas da cidade de São Paulo. Para caso
+        // nao seja passado nenhuma coordenada a requisição dessa api será para cidade de são paulo
         async function carregarDadosAPI(lat = -23.5505, lon = -46.6333, nomeCidade = "São Paulo, BR") {
             atualizarInterfaceLoading();
             
@@ -436,7 +441,7 @@
             }
         }
 
-        // Visual de Loading
+        // Visual de Loading. Animação de loading
         function atualizarInterfaceLoading() {
             const skeleton = `
                 <div class="animate-pulse space-y-3">
@@ -448,6 +453,9 @@
         }
 
         // Classificação dos códigos de tempo WMO da Open-Meteo
+        // Essa funcao recebe o codigo apos ser multiplicado pela matriz W. 
+        // Passando por varios condicionais para classificar o clima.
+        // Em outra função está acontecendo a multiplicação.
         function classificarClima(codigo) {
             if ([0].includes(codigo)) return { descricao: "Ensolarado", emoji: "☀️", cor: "text-amber-400", bg: "from-amber-500/10 to-orange-500/5" };
             if ([1, 2].includes(codigo)) return { descricao: "Parcialmente Nublado", emoji: "🌤️", cor: "text-sky-300", bg: "from-sky-500/10 to-slate-500/5" };
@@ -578,6 +586,7 @@
             const dia = globalDadosDiarios[idx];
 
             // Normalização dos dados para criar o vetor X [1 x 4]
+            // Basicamente estrutura as informações para que estejam no padrão.
             // Max Temp dividida por 40 (temperatura de referência)
             const tempMaxNorm = Math.min(Math.max(dia.tempMax / 40.0, 0), 1.2);
             // Min Temp dividida por 40
@@ -611,6 +620,8 @@
             const elCloud = document.getElementById('scoreCloud');
             const elRain = document.getElementById('scoreRain');
 
+            // Busca o elemento com a classe '.val' exclusivamente dentro da variavel do html 'elSun'
+            // e exibe a pontuação da classe Ensolarado (S[0]) arredondada para 2 casas decimais
             elSun.querySelector('.val').innerText = S[0].toFixed(2);
             elCloud.querySelector('.val').innerText = S[1].toFixed(2);
             elRain.querySelector('.val').innerText = S[2].toFixed(2);
